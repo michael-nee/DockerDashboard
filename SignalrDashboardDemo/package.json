@@ -1,0 +1,10 @@
+{
+  "name": "myproject",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@aspnet/signalr": "^1.1.0",
+    "chartjs": "^0.3.24",
+    "install": "^0.12.2",
+    "npm": "^6.5.0"
+  }
+}

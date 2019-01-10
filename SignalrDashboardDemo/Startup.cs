@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SignalrDashboardDemo.Hubs;
+using SignalrDashboardDemo.Services;
 
 namespace SignalrDashboardDemo
 {
@@ -31,6 +33,19 @@ namespace SignalrDashboardDemo
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.AddSignalR();
+
+            services.AddTransient<IDockerService, DockerService>();
+
+            services.AddCors(o =>
+            {
+                o.AddPolicy("Everything", p =>
+                {
+                    p.AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowAnyOrigin();
+                });
+            });
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
@@ -52,6 +67,14 @@ namespace SignalrDashboardDemo
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+
+            app.UseCors("Everything");
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<DockerHostHub>("/DockerHost");
+            });
+
 
             app.UseMvc(routes =>
             {

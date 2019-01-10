@@ -1,0 +1,138 @@
+﻿@model SignalrDashboardDemo.Models.ContainerViewModel
+
+@{
+    ViewData["Title"] = "Container";
+}
+
+<h1>Container</h1>
+<hr />
+<div>
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Id)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Id)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Running)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Running)
+        </dd>
+    </dl>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <h4>Container Stats</h4>
+        <button id="start-container-stats" class="btn btn-primary">Start Streaming Container Stats</button>
+        <button id="stop-container-stats" class="btn btn-danger d-none">Stop Streaming Container Stats</button>
+    </div>
+    <div class="col-md-6">
+        <h4>Logs</h4>
+        <button id="start-container-logs" class="btn btn-primary">Start Streaming Container Logs</button>
+        <button id="stop-container-logs" class="btn btn-danger d-none">Stop Streaming Container Logs</button>
+
+        <div class="col-md-12">
+            <pre><code id="logs">
+            </code>
+            </pre>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+    {
+    <script src="~/lib/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/container.js"></script>
+    <script>
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/DockerHost")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        window.addEventListener("load", function () {
+            connection.start();
+        });
+
+        window.onload = function () {
+        }
+
+        $('#start-container-stats').on('click', function (e) {
+            $.ajax({
+                url: '/Home/StartContainerStatsStreaming',
+                type: 'POST',
+                async: true,
+                data: { containerId: '@Model.Id' },
+                success: function (data) {
+                    alert('Stream stats starting');
+                    $('#start-container-stats').addClass('d-none');
+                    $('#stop-container-stats').removeClass('d-none');
+
+                    connection.on('NewStat',
+                        function (sender, message) {
+                            console.log(message);
+                            //values.push(message.value);
+                            //values.shift();
+
+                            //chart.update();
+                        });
+                }
+            });
+        });
+
+        $('#stop-container-stats').on('click', function (e) {
+            $.ajax({
+                url: '/Home/StopContainerStatsStreaming',
+                type: 'POST',
+                async: true,
+                data: { containerId: '@Model.Id' },
+                success: function (data) {
+                    alert('Stream stats stopping');
+                    $('#start-container-stats').removeClass('d-none');
+                    $('#stop-container-stats').addClass('d-none');
+                }
+            });
+        });
+
+        $('#start-container-logs').on('click', function (e) {
+            $.ajax({
+                url: '/Home/StartContainerLogsStreaming',
+                type: 'POST',
+                async: true,
+                data: { containerId: '@Model.Id' },
+                success: function (data) {
+                    alert('Stream logs starting');
+                    $('#start-container-logs').addClass('d-none');
+                    $('#stop-container-logs').removeClass('d-none');
+
+                    connection.on('NewLog',
+                        function (sender, message) {
+                            $('#logs').append(message);
+                    });
+                }
+            });
+        });
+
+        $('#stop-container-logs').on('click', function (e) {
+            $.ajax({
+                url: '/Home/StopContainerLogsStreaming',
+                type: 'POST',
+                async: true,
+                data: { containerId: '@Model.Id'},
+                success: function (data) {
+                    alert('Stream logs stopping');
+                    $('#start-container-logs').removeClass('d-none');
+                    $('#stop-container-logs').addClass('d-none');
+                }
+            });
+        })
+    </script>
+}
